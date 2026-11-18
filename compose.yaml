@@ -1,0 +1,34 @@
+services:
+  radar:
+    build: .
+    image: aflow-radar:local
+    restart: unless-stopped
+    environment:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
+    ports:
+      - "127.0.0.1:8899:8899"
+    cpus: 1.0
+    mem_limit: 1g
+    pids_limit: 64
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: ["/tmp:size=64m,mode=1777"]
+    volumes:
+      - ./data:/app/data
+      - ./charts:/app/charts
+      - ./auth.json:/app/auth.json:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,json; a=json.load(open('/app/auth.json')); r=urllib.request.Request('http://127.0.0.1:8899/api/health',headers={'X-Health-Token':a['health_token']}); urllib.request.urlopen(r, timeout=5)"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

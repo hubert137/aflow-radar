@@ -1,0 +1,10 @@
+auth.json
+.env
+.env.*
+data/
+charts/
+backups/
+*.log
+__pycache__/
+*.pyc
+.git/
