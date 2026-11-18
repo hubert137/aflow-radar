@@ -6,6 +6,17 @@ Three charts: signed overview, positive net inflow, negative net outflow. Single
 Week/month/year show the latest observed DAILY net amount for each board, never a sum of intraday cumulative snapshots. Missing dates stay null. Sectors overlap: do not sum boards to infer total-market flow. Positive top30 and negative top15 are ranked by the latest available date.
 Historical daily-close files, if independently obtained lawfully, belong in data/history_daily/fund_flow_YYYYMMDD.json. No history is shipped. Historical 15:00 is a plotting marker, not a measured timestamp. Today uses live data; prior days can use provider daily close alongside retained live snapshots.
 
+## Screenshots
+Actual running dashboard captured on 2026-11-18, showing the latest available sample at 14:57:16 Asia/Shanghai. These are saved snapshots, not live quotes or confirmed market-close data. The three panels show signed net amounts, positive net inflow, and net outflow.
+
+### This week
+Three dates with records.
+![Weekly dashboard with three fund-flow charts](docs/images/dashboard-week.png)
+
+### This month
+Thirteen dates with records. Missing historical dates remain missing, not zero.
+![Monthly dashboard with three fund-flow charts](docs/images/dashboard-month.png)
+
 ## Deploy
 Requires Docker Engine and Docker Compose v2. The pinned official Python base was tested on Linux ARM64; verify platform support before deploying elsewhere.
 1. From the repository root, run sudo python3 scripts/init_auth.py. Choose a unique strong password. This creates ignored credentials and data directories owned by container UID10001.
@@ -20,9 +31,12 @@ Health reports collection freshness, not financial-data correctness. Before the 
 Endpoint stability and correctness are not guaranteed. This is a monitoring tool, not investment advice or an order-execution system.
 
 ## Test and stop
+```sh
 docker compose build
-docker run --rm --user 0 --network none --cpus 1 --memory 1g --entrypoint python -v "$PWD/tests:/tests:ro" aflow-radar:local /tests/smoke.py
+docker run --rm --user 0 --network none --cpus 0.5 --memory 512m --pids-limit 64 --cap-drop ALL --security-opt no-new-privileges -e OPENBLAS_NUM_THREADS=1 -e OMP_NUM_THREADS=1 -e MKL_NUM_THREADS=1 -e NUMEXPR_NUM_THREADS=1 --entrypoint python -v "$PWD/tests:/tests:ro" aflow-radar:local /tests/smoke.py
 docker compose down
+```
+The freshly built Linux ARM64 image passed isolated offline smoke tests on 2026-11-18: anonymous requests return 401, authenticated page/data/dates/static requests return 200, daily views use the last snapshot and missing days remain null. This test uses synthetic data and binds no host port. Compose already limits numeric-library threads to one; keep the same environment for direct docker run tests on many-core hosts.
 Stopping/removing the service does not delete bind-mounted data. Keep backups before upgrading. No host firewall, proxy, DNS or unrelated services need changes.
 
 ## License / dependencies
